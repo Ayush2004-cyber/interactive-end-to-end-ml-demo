@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulated House Price Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #030712; /* bg-gray-950 */
+            color: #f9fafb; /* text-gray-50 */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        .phase-screen {
+            display: none; /* Hidden by default */
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .data-icon {
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+        .data-row {
+            transition: all 0.5s ease-out;
+        }
+        .animate-fill {
+            animation: fillCell 0.8s forwards;
+        }
+        @keyframes fillCell {
+            from { background-color: transparent; }
+            to { background-color: rgba(59, 130, 246, 0.3); } /* blue-500 with opacity */
+        }
+        .animate-adjust {
+            animation: adjustValue 0.8s forwards;
+        }
+        @keyframes adjustValue {
+            0% { color: #ef4444; } /* red-500 */
+            50% { color: #ef4444; transform: scale(1.1); }
+            100% { color: #f9fafb; transform: scale(1); }
+        }
+        .animate-flow {
+            animation: flowData 1s infinite alternate;
+        }
+        @keyframes flowData {
+            from { transform: translateX(0); }
+            to { transform: translateX(10px); }
+        }
+        .animate-pulse-light {
+            animation: pulseLight 1.5s infinite alternate;
+        }
+        @keyframes pulseLight {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+        .animate-deploy {
+            animation: deployMove 1.5s ease-in-out forwards;
+        }
+        @keyframes deployMove {
+            0% { transform: translateX(0); opacity: 1; }
+            50% { transform: translateX(150px); opacity: 0.5; }
+            100% { transform: translateX(300px); opacity: 1; }
+        }
+        .terminal-log {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.875rem; /* text-sm */
+            background-color: #1f2937; /* gray-800 */
+            color: #d1d5db; /* gray-300 */
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4b5563; /* gray-600 */
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2563eb; /* blue-600 */
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2563eb;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-3xl bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-6 md:p-8 space-y-6">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="phase-screen text-center fade-in">
+            <h1 class="text-4xl font-bold text-gray-50 mb-4">Simulated House Price Predictor</h1>
+            <p class="text-gray-400 mb-6">Experience a Production-Grade ML Pipeline</p>
+            <p class="text-gray-300 mb-8 max-w-prose mx-auto">
+                This demo app illustrates the phases of a real-world Machine Learning project:
+                <span class="font-semibold text-blue-400">Data Ingestion</span>,
+                <span class="font-semibold text-blue-400">Processing & Feature Engineering</span>,
+                <span class="font-semibold text-blue-400">Model Training</span>,
+                <span class="font-semibold text-blue-400">Deployment</span>, and
+                <span class="font-semibold text-blue-400">Real-time Prediction</span>.
+            </p>
+            <button id="start-simulation-btn" class="px-8 py-3 bg-gray-50 text-gray-900 font-semibold rounded-md hover:bg-gray-200 transition-colors">
+                Start Simulation ✨
+            </button>
+        </div>
+
+        <!-- Phase 1: Data Ingestion -->
+        <div id="ingestion-screen" class="phase-screen text-center">
+            <h2 class="text-3xl font-semibold text-gray-50 mb-4">Simulating Data Ingestion 📊</h2>
+            <p class="text-gray-400 mb-6 max-w-prose mx-auto">
+                Watch as our system 'ingests' new house data. In a real project, this handles various file types using a smart <span class="font-semibold text-blue-400">Factory Pattern</span>!
+            </p>
+            <div id="data-ingestion-visuals" class="flex flex-col items-center justify-center space-y-4 mb-8">
+                <div id="initial-data-icons" class="flex space-x-6 text-5xl text-gray-400">
+                    <span class="data-icon">📄<p class="text-sm mt-1">CSV</p></span>
+                    <span class="data-icon">📦<p class="text-sm mt-1">JSON</p></span>
+                    <span class="data-icon">📜<p class="text-sm mt-1">XML</p></span>
+                </div>
+                <div id="data-flow-animation" class="hidden flex flex-col items-center space-y-2">
+                    <div class="text-gray-300 text-lg mb-2" id="ingestion-status-text"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex flex-col space-y-1" id="simulated-data-rows">
+                            <!-- Data rows will appear here -->
+                        </div>
+                        <div class="text-5xl text-blue-400 animate-flow">➡️</div>
+                        <div class="text-6xl text-blue-500">🗄️</div> <!-- Database icon -->
+                    </div>
+                </div>
+            </div>
+            <p id="ingestion-success-message" class="text-green-400 text-lg font-semibold mt-4 hidden"></p>
+            <button id="simulate-ingestion-btn" class="px-6 py-2 bg-gray-50 text-gray-900 font-semibold rounded-md hover:bg-gray-200 transition-colors">
+                Simulate Data Stream
+            </button>
+            <button id="next-ingestion-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors ml-4 hidden">
+                Next: Processing
+            </button>
+        </div>
+
+        <!-- Phase 2: Data Processing -->
+        <div id="processing-screen" class="phase-screen text-center">
+            <h2 class="text-3xl font-semibold text-gray-50 mb-4">Processing Data & Engineering Features 🛠️</h2>
+            <p class="text-gray-400 mb-6 max-w-prose mx-auto">
+                Our pipeline is 'cleaning' and 'transforming' the data, applying advanced techniques like outlier detection and feature scaling. This uses <span class="font-semibold text-blue-400">Strategy</span> and <span class="font-semibold text-blue-400">Template Design Patterns</span>!
+            </p>
+            <div id="data-processing-visuals" class="flex flex-col items-center mb-8">
+                <div class="bg-gray-800 p-4 rounded-md border border-gray-700 w-full max-w-md">
+                    <div class="grid grid-cols-3 gap-2 text-sm text-gray-300 mb-2 font-semibold">
+                        <span>Feature A</span><span>Feature B</span><span>Feature C</span>
+                    </div>
+                    <div id="simulated-data-table" class="grid grid-cols-3 gap-2 text-sm text-gray-400">
+                        <span class="p-1 border border-gray-700 rounded-sm">1200</span><span class="p-1 border border-gray-700 rounded-sm">25</span><span class="p-1 border border-gray-700 rounded-sm">High</span>
+                        <span class="p-1 border border-gray-700 rounded-sm">1500</span><span class="p-1 border border-gray-700 rounded-sm"></span><span class="p-1 border border-gray-700 rounded-sm">Medium</span>
+                        <span class="p-1 border border-gray-700 rounded-sm">800</span><span class="p-1 border border-gray-700 rounded-sm">18</span><span class="p-1 border border-gray-700 rounded-sm">Low</span>
+                        <span class="p-1 border border-gray-700 rounded-sm">9500</span><span class="p-1 border border-gray-700 rounded-sm">30</span><span class="p-1 border border-gray-700 rounded-sm">Very High</span>
+                        <span class="p-1 border border-gray-700 rounded-sm"></span><span class="p-1 border border-gray-700 rounded-sm">22</span><span class="p-1 border border-gray-700 rounded-sm">Medium</span>
+                    </div>
+                </div>
+                <div id="processing-status-text" class="text-gray-300 text-lg mt-4"></div>
+                <div id="simulated-insights-panel" class="bg-gray-800 p-4 rounded-md border border-gray-700 w-full max-w-md mt-6 text-left hidden">
+                    <h3 class="text-xl font-semibold text-gray-50 mb-2">Simulated Insights:</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-1">
+                        <li><span class="font-semibold text-green-400">Missing Values Handled:</span> 1,200 'empty' entries 'filled' using median imputation!</li>
+                        <li><span class="font-semibold text-green-400">Outliers Detected:</span> 50 'extreme' house prices 'adjusted' by capping to 99th percentile!</li>
+                        <li><span class="font-semibold text-green-400">New Features Engineered:</span> 'Neighborhood Score' and 'Proximity to Amenities' 'calculated' based on existing data points!</li>
+                        <li><span class="font-semibold text-green-400">Data Cleanliness:</span> All features now 'scaled' and 'ready' for modeling.</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="process-data-btn" class="px-6 py-2 bg-gray-50 text-gray-900 font-semibold rounded-md hover:bg-gray-200 transition-colors">
+                Process Data
+            </button>
+            <button id="next-processing-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors ml-4 hidden">
+                Next: Training
+            </button>
+        </div>
+
+        <!-- Phase 3: Model Training -->
+        <div id="training-screen" class="phase-screen text-center">
+            <h2 class="text-3xl font-semibold text-gray-50 mb-4">Training Our ML Model 🧠</h2>
+            <p class="text-gray-400 mb-6 max-w-prose mx-auto">
+                The machine learning model is 'learning' from the processed data. We're using advanced algorithms and tracking performance with <span class="font-semibold text-blue-400">MLflow</span>!
+            </p>
+            <div id="model-training-visuals" class="flex flex-col items-center mb-8">
+                <div class="relative w-64 h-40 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-around mb-4">
+                    <div id="model-diagram" class="w-full h-full flex items-center justify-around">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse-light">Input</div>
+                        <div class="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse-light">Hidden</div>
+                        <div class="w-2 h-2 bg-gray-600 rounded-full"></div>
+                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse-light">Output</div>
+                    </div>
+                </div>
+                <div id="simulated-console-log" class="terminal-log w-full max-w-md text-left mb-4">
+                    <p class="text-gray-500">Awaiting training...</p>
+                </div>
+                <div id="simulated-metrics-panel" class="bg-gray-800 p-4 rounded-md border border-gray-700 w-full max-w-md text-left hidden">
+                    <h3 class="text-xl font-semibold text-gray-50 mb-2">Simulated Performance Metrics:</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-1">
+                        <li><span class="font-semibold text-green-400">Simulated Training Loss:</span> 'Decreased from 0.9 to 0.08' (91% reduction)</li>
+                        <li><span class="font-semibold text-green-400">Simulated Model Accuracy (R²):</span> '0.92' (92% of variance in house prices explained)</li>
+                        <li><span class="font-semibold text-green-400">Cross-Validation Score:</span> 'Avg. R²: 0.915'</li>
+                        <li><span class="font-semibold text-blue-400">MLflow Log:</span> 'Experiment ID: #007 - Run ID: abc123def' 'Model Version: 2.1 (Linear Regression)'</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="train-model-btn" class="px-6 py-2 bg-gray-50 text-gray-900 font-semibold rounded-md hover:bg-gray-200 transition-colors">
+                Train Model
+            </button>
+            <button id="next-training-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors ml-4 hidden">
+                Next: Deployment
+            </button>
+        </div>
+
+        <!-- Phase 4: Model Deployment -->
+        <div id="deployment-screen" class="phase-screen text-center">
+            <h2 class="text-3xl font-semibold text-gray-50 mb-4">Deploying Model to Production 🚀</h2>
+            <p class="text-gray-400 mb-6 max-w-prose mx-auto">
+                Our trained model is being 'deployed' as a live API service, ready for real-time predictions! This uses <span class="font-semibold text-blue-400">ZenML</span> for orchestration and continuous deployment.
+            </p>
+            <div id="model-deployment-visuals" class="flex items-center justify-center space-x-4 mb-8">
+                <div class="text-6xl text-purple-400">🧠</div> <!-- Trained Model Icon -->
+                <div class="text-5xl text-gray-600">➡️</div>
+                <div id="cloud-icon" class="text-6xl text-blue-400 opacity-50">☁️</div> <!-- Cloud Server Icon -->
+                <div class="text-5xl text-gray-600">➡️</div>
+                <div id="web-server-icon" class="text-6xl text-green-400 opacity-50">🌐</div> <!-- Web Server Icon -->
+            </div>
+            <div id="deployment-terminal-log" class="terminal-log w-full max-w-md text-left mb-4">
+                <p class="text-gray-500">Awaiting deployment command...</p>
+            </div>
+            <p id="deployment-success-message" class="text-green-400 text-lg font-semibold mt-4 hidden"></p>
+            <button id="deploy-model-btn" class="px-6 py-2 bg-gray-50 text-gray-900 font-semibold rounded-md hover:bg-gray-200 transition-colors">
+                Deploy Model
+            </button>
+            <button id="next-deployment-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors ml-4 hidden">
+                Next: Prediction
+            </button>
+        </div>
+
+        <!-- Phase 5: Real-time Prediction -->
+        <div id="prediction-screen" class="phase-screen text-center">
+            <h2 class="text-3xl font-semibold text-gray-50 mb-4">Get a Simulated House Price Prediction! 💰</h2>
+            <p class="text-gray-400 mb-6 max-w-prose mx-auto">
+                Enter some 'house features' below, and our 'deployed model' will 'predict' the price!
+            </p>
+            <div class="bg-gray-800 p-6 rounded-md border border-gray-700 w-full max-w-md mx-auto text-left space-y-4">
+                <div>
+                    <label for="sqft" class="block text-sm font-medium text-gray-300 mb-1">Square Footage (sqft):</label>
+                    <input type="number" id="sqft" value="2000" min="500" max="10000" class="block w-full bg-gray-700 border-gray-600 rounded-md p-3 text-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="bedrooms" class="block text-sm font-medium text-gray-300 mb-1">Number of Bedrooms:</label>
+                    <input type="number" id="bedrooms" value="3" min="1" max="8" class="block w-full bg-gray-700 border-gray-600 rounded-md p-3 text-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="neighborhood-quality" class="block text-sm font-medium text-gray-300 mb-1">Neighborhood Quality (1-5):</label>
+                    <select id="neighborhood-quality" class="block w-full bg-gray-700 border-gray-600 rounded-md p-3 text-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="1">1 - Low</option>
+                        <option value="2">2 - Medium-Low</option>
+                        <option value="3">3 - Medium</option>
+                        <option value="4" selected>4 - Medium-High</option>
+                        <option value="5">5 - High</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label for="has-garden" class="text-sm font-medium text-gray-300">Has Garden?</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="has-garden" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div>
+                    <label for="year-built" class="block text-sm font-medium text-gray-300 mb-1">Year Built:</label>
+                    <input type="number" id="year-built" value="1995" min="1800" max="2023" class="block w-full bg-gray-700 border-gray-600 rounded-md p-3 text-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <button id="get-prediction-btn" class="w-full py-3 bg-gray-50 text-gray-900 font-semibold rounded-md hover:bg-gray-200 transition-colors mt-4">
+                    Get Prediction
+                </button>
+                <div id="prediction-result" class="mt-4 p-4 bg-gray-700 rounded-md text-center hidden">
+                    <p class="text-lg text-gray-300 mb-2" id="prediction-status"></p>
+                    <p class="text-2xl font-bold text-green-400 mb-2">Predicted Price: <span id="predicted-price">$0</span></p>
+                    <p class="text-sm text-gray-400 mb-2">Confidence Score: <span id="confidence-score"></span></p>
+                    <p class="text-xs text-gray-500">Note: This is a simulated prediction for demonstration purposes only. Actual model behavior can vary.</p>
+                </div>
+                <div class="flex justify-between mt-4">
+                    <button id="run-another-prediction-btn" class="px-4 py-2 bg-gray-800 text-gray-50 font-semibold rounded-md hover:bg-gray-700 transition-colors hidden">
+                        Run Another Prediction
+                    </button>
+                    <button id="view-pipeline-status-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
+                        View Pipeline Status
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optional: MLOps Dashboard -->
+        <div id="dashboard-screen" class="phase-screen text-center">
+            <h2 class="text-3xl font-semibold text-gray-50 mb-4">Simulated MLOps Dashboard 📈</h2>
+            <p class="text-gray-400 mb-6 max-w-prose mx-auto">
+                In a real scenario, this dashboard tracks model performance, data drift, and pipeline health in real-time. This view is powered by simulated MLflow tracking.
+            </p>
+            <div class="bg-gray-800 p-6 rounded-md border border-gray-700 w-full max-w-md mx-auto text-left space-y-6">
+                <!-- Graph 1: Model Performance Over Time (R²) -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-50 mb-2">Model Performance Over Time (R²)</h3>
+                    <div class="h-24 bg-gray-700 rounded-md flex items-end p-2 relative">
+                        <div class="absolute top-0 left-0 right-0 text-xs text-gray-400 flex justify-between px-2 py-1">
+                            <span>0.8</span><span>0.9</span><span>1.0</span>
+                        </div>
+                        <div class="w-full h-1 bg-blue-500 absolute bottom-2 left-0 right-0"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full absolute bottom-1 left-[10%] -ml-1"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full absolute bottom-1 left-[30%] -ml-1"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full absolute bottom-1 left-[50%] -ml-1"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full absolute bottom-1 left-[70%] -ml-1"></div>
+                        <div class="w-2 h-2 bg-blue-400 rounded-full absolute bottom-1 left-[90%] -ml-1"></div>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-2">Stable performance at ~0.92 R².</p>
+                </div>
+
+                <!-- Graph 2: Data Volume Ingested (Last 7 Days) -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-50 mb-2">Data Volume Ingested (Last 7 Days)</h3>
+                    <div class="h-24 bg-gray-700 rounded-md flex items-end justify-around p-2">
+                        <div class="w-8 bg-green-500 h-3/4 rounded-sm" title="Day 1: 10k records"></div>
+                        <div class="w-8 bg-green-500 h-4/5 rounded-sm" title="Day 2: 12k records"></div>
+                        <div class="w-8 bg-green-500 h-2/3 rounded-sm" title="Day 3: 9k records"></div>
+                        <div class="w-8 bg-green-500 h-full rounded-sm" title="Day 4: 15k records"></div>
+                        <div class="w-8 bg-green-500 h-3/4 rounded-sm" title="Day 5: 10k records"></div>
+                        <div class="w-8 bg-green-500 h-4/5 rounded-sm" title="Day 6: 12k records"></div>
+                        <div class="w-8 bg-green-500 h-2/3 rounded-sm" title="Day 7: 9k records"></div>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-2">Consistent daily data ingestion.</p>
+                </div>
+
+                <!-- Table: Recent Pipeline Runs -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-50 mb-2">Recent Pipeline Runs</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-400">
+                            <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                                <tr>
+                                    <th scope="col" class="px-4 py-2">Run ID</th>
+                                    <th scope="col" class="px-4 py-2">Status</th>
+                                    <th scope="col" class="px-4 py-2">Model Version</th>
+                                    <th scope="col" class="px-4 py-2">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-gray-800 border-b border-gray-700">
+                                    <td class="px-4 py-2">#007-xyz</td>
+                                    <td class="px-4 py-2 text-green-400">✅ Success</td>
+                                    <td class="px-4 py-2">2.1</td>
+                                    <td class="px-4 py-2">2024-03-10 14:30</td>
+                                </tr>
+                                <tr class="bg-gray-800 border-b border-gray-700">
+                                    <td class="px-4 py-2">#006-abc</td>
+                                    <td class="px-4 py-2 text-green-400">✅ Success</td>
+                                    <td class="px-4 py-2">2.0</td>
+                                    <td class="px-4 py-2">2024-03-08 09:15</td>
+                                </tr>
+                                <tr id="data-drift-row" class="bg-gray-800 border-b border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors">
+                                    <td class="px-4 py-2">#005-def</td>
+                                    <td class="px-4 py-2 text-yellow-400">⚠️ Data Drift Alert</td>
+                                    <td class="px-4 py-2">1.9</td>
+                                    <td class="px-4 py-2">2024-03-05 20:00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="data-drift-alert-detail" class="mt-2 p-3 bg-yellow-900 text-yellow-200 rounded-md text-sm hidden">
+                        <p class="font-semibold">Alert Detail:</p>
+                        <p>Minor data drift detected in 'Neighborhood Quality' feature. Model performance may degrade if not addressed.</p>
+                    </div>
+                </div>
+
+                <!-- Key Metrics Display -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-50 mb-2">Key Metrics</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-1">
+                        <li><span class="font-semibold text-blue-400">Current Model Version:</span> 2.1</li>
+                        <li><span class="font-semibold text-blue-400">Last Deployment:</span> 2 days ago</li>
+                        <li><span class="font-semibold text-blue-400">Data Latency:</span> &lt; 1 second</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="back-to-prediction-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors mt-8">
+                Back to Prediction
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const appContainer = document.getElementById('app-container');
+        const phases = ['welcome', 'ingestion', 'processing', 'training', 'deployment', 'prediction', 'dashboard'];
+        let currentPhase = 'welcome';
+
+        const phaseElements = {};
+        phases.forEach(phase => {
+            phaseElements[phase] = document.getElementById(`${phase}-screen`);
+        });
+
+        function showPhase(phaseName) {
+            phases.forEach(phase => {
+                const element = phaseElements[phase];
+                if (element) {
+                    element.style.display = 'none';
+                    element.classList.remove('fade-in'); // Remove to re-apply on next show
+                }
+            });
+            const targetElement = phaseElements[phaseName];
+            if (targetElement) {
+                targetElement.style.display = 'block';
+                targetElement.classList.add('fade-in');
+                currentPhase = phaseName;
+            }
+        }
+
+        // Initial display
+        showPhase(currentPhase);
+
+        // --- Welcome Screen Logic ---
+        document.getElementById('start-simulation-btn').addEventListener('click', () => {
+            showPhase('ingestion');
+        });
+
+        // --- Phase 1: Data Ingestion Logic ---
+        const simulateIngestionBtn = document.getElementById('simulate-ingestion-btn');
+        const nextIngestionBtn = document.getElementById('next-ingestion-btn');
+        const initialDataIcons = document.getElementById('initial-data-icons');
+        const dataFlowAnimation = document.getElementById('data-flow-animation');
+        const ingestionStatusText = document.getElementById('ingestion-status-text');
+        const simulatedDataRows = document.getElementById('simulated-data-rows');
+        const ingestionSuccessMessage = document.getElementById('ingestion-success-message');
+
+        simulateIngestionBtn.addEventListener('click', () => {
+            simulateIngestionBtn.disabled = true;
+            initialDataIcons.style.opacity = '0';
+            initialDataIcons.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+                initialDataIcons.style.display = 'none';
+                dataFlowAnimation.classList.remove('hidden');
+                ingestionStatusText.textContent = "Reading `house_data.csv`...";
+                simulatedDataRows.innerHTML = `
+                    <div class="data-row bg-gray-700 p-2 rounded-md w-48 text-left">ID: 1, SqFt: 1800, Beds: 3</div>
+                `;
+            }, 500);
+
+            setTimeout(() => {
+                ingestionStatusText.textContent = "Loading `property_features.json`...";
+                simulatedDataRows.innerHTML += `
+                    <div class="data-row bg-gray-700 p-2 rounded-md w-48 text-left mt-1">ID: 2, Quality: 4, Garden: Yes</div>
+                `;
+            }, 1500);
+
+            setTimeout(() => {
+                ingestionStatusText.textContent = "Parsing `neighborhood_info.xml`...";
+                simulatedDataRows.innerHTML += `
+                    <div class="data-row bg-gray-700 p-2 rounded-md w-48 text-left mt-1">ID: 3, Year: 1990, Price: 280k</div>
+                `;
+            }, 2500);
+
+            setTimeout(() => {
+                ingestionStatusText.textContent = "";
+                simulatedDataRows.innerHTML = ''; // Clear rows
+                ingestionSuccessMessage.textContent = "Data Ingestion Complete! 🏠✨ 10,000 new house records 'loaded' and 'parsed' into a unified format.";
+                ingestionSuccessMessage.classList.remove('hidden');
+                nextIngestionBtn.classList.remove('hidden');
+            }, 3500);
+        });
+
+        nextIngestionBtn.addEventListener('click', () => {
+            showPhase('processing');
+            // Reset ingestion screen for potential re-runs
+            simulateIngestionBtn.disabled = false;
+            initialDataIcons.style.display = 'flex';
+            initialDataIcons.style.opacity = '1';
+            initialDataIcons.style.transform = 'translateY(0)';
+            dataFlowAnimation.classList.add('hidden');
+            ingestionSuccessMessage.classList.add('hidden');
+            nextIngestionBtn.classList.add('hidden');
+        });
+
+        // --- Phase 2: Data Processing Logic ---
+        const processDataBtn = document.getElementById('process-data-btn');
+        const nextProcessingBtn = document.getElementById('next-processing-btn');
+        const simulatedDataTable = document.getElementById('simulated-data-table');
+        const processingStatusText = document.getElementById('processing-status-text');
+        const simulatedInsightsPanel = document.getElementById('simulated-insights-panel');
+
+        processDataBtn.addEventListener('click', () => {
+            processDataBtn.disabled = true;
+            simulatedInsightsPanel.classList.add('hidden'); // Hide insights if re-running
+
+            const cells = simulatedDataTable.children;
+
+            // Step 1: Missing Value Handling
+            processingStatusText.textContent = "Imputing missing 'LotArea' values (Strategy Pattern)...";
+            setTimeout(() => {
+                cells[4].classList.add('animate-fill'); // Empty cell for Feature B, row 2
+                cells[13].classList.add('animate-fill'); // Empty cell for Feature A, row 5
+                cells[4].textContent = '22'; // Simulate fill
+                cells[13].textContent = '1100'; // Simulate fill
+            }, 1000);
+
+            // Step 2: Outlier Detection
+            setTimeout(() => {
+                processingStatusText.textContent = "Detecting and adjusting 'GrLivArea' outliers (Template Pattern)...";
+                cells[9].classList.add('animate-adjust'); // 9500
+                cells[9].textContent = '3500'; // Simulate adjustment
+            }, 2500);
+
+            // Step 3: Feature Scaling/Engineering
+            setTimeout(() => {
+                processingStatusText.textContent = "Applying 'Log Transform' to 'SalePrice'; creating 'Total Rooms' feature...";
+                // Simulate scaling on a column (e.g., Feature A)
+                cells[0].textContent = '1.0';
+                cells[3].textContent = '1.2';
+                cells[6].textContent = '0.8';
+                cells[9].textContent = '3.5'; // Already adjusted
+                cells[12].textContent = '1.1';
+                Array.from(cells).forEach(cell => cell.classList.remove('animate-fill', 'animate-adjust')); // Clear animations
+            }, 4000);
+
+            setTimeout(() => {
+                processingStatusText.textContent = "";
+                simulatedInsightsPanel.classList.remove('hidden');
+                nextProcessingBtn.classList.remove('hidden');
+            }, 5500);
+        });
+
+        nextProcessingBtn.addEventListener('click', () => {
+            showPhase('training');
+            // Reset processing screen
+            processDataBtn.disabled = false;
+            simulatedInsightsPanel.classList.add('hidden');
+            nextProcessingBtn.classList.add('hidden');
+            processingStatusText.textContent = "";
+            // Reset table to initial state
+            simulatedDataTable.innerHTML = `
+                <span class="p-1 border border-gray-700 rounded-sm">1200</span><span class="p-1 border border-gray-700 rounded-sm">25</span><span class="p-1 border border-gray-700 rounded-sm">High</span>
+                <span class="p-1 border border-gray-700 rounded-sm">1500</span><span class="p-1 border border-gray-700 rounded-sm"></span><span class="p-1 border border-gray-700 rounded-sm">Medium</span>
+                <span class="p-1 border border-gray-700 rounded-sm">800</span><span class="p-1 border border-gray-700 rounded-sm">18</span><span class="p-1 border border-gray-700 rounded-sm">Low</span>
+                <span class="p-1 border border-gray-700 rounded-sm">9500</span><span class="p-1 border border-gray-700 rounded-sm">30</span><span class="p-1 border border-gray-700 rounded-sm">Very High</span>
+                <span class="p-1 border border-gray-700 rounded-sm"></span><span class="p-1 border border-gray-700 rounded-sm">22</span><span class="p-1 border border-gray-700 rounded-sm">Medium</span>
+            `;
+        });
+
+        // --- Phase 3: Model Training Logic ---
+        const trainModelBtn = document.getElementById('train-model-btn');
+        const nextTrainingBtn = document.getElementById('next-training-btn');
+        const simulatedConsoleLog = document.getElementById('simulated-console-log');
+        const simulatedMetricsPanel = document.getElementById('simulated-metrics-panel');
+        const modelDiagramNodes = document.querySelectorAll('#model-diagram > div');
+
+        trainModelBtn.addEventListener('click', () => {
+            trainModelBtn.disabled = true;
+            simulatedMetricsPanel.classList.add('hidden');
+            simulatedConsoleLog.innerHTML = ''; // Clear previous logs
+
+            let epoch = 1;
+            let loss = 0.9;
+
+            const trainingInterval = setInterval(() => {
+                if (epoch <= 10) {
+                    loss = (loss * 0.85).toFixed(2); // Simulate decreasing loss
+                    simulatedConsoleLog.innerHTML += `<p>Epoch ${epoch}/10: Loss: ${loss}</p>`;
+                    simulatedConsoleLog.scrollTop = simulatedConsoleLog.scrollHeight; // Scroll to bottom
+                    modelDiagramNodes.forEach(node => node.classList.toggle('animate-pulse-light')); // Simple pulse
+                    epoch++;
+                } else {
+                    clearInterval(trainingInterval);
+                    simulatedConsoleLog.innerHTML += `<p class="text-green-400">Training Complete.</p>`;
+                    simulatedMetricsPanel.classList.remove('hidden');
+                    nextTrainingBtn.classList.remove('hidden');
+                }
+            }, 500);
+        });
+
+        nextTrainingBtn.addEventListener('click', () => {
+            showPhase('deployment');
+            // Reset training screen
+            trainModelBtn.disabled = false;
+            simulatedMetricsPanel.classList.add('hidden');
+            nextTrainingBtn.classList.add('hidden');
+            simulatedConsoleLog.innerHTML = '<p class="text-gray-500">Awaiting training...</p>';
+            modelDiagramNodes.forEach(node => node.classList.remove('animate-pulse-light')); // Ensure animation is off
+        });
+
+        // --- Phase 4: Model Deployment Logic ---
+        const deployModelBtn = document.getElementById('deploy-model-btn');
+        const nextDeploymentBtn = document.getElementById('next-deployment-btn');
+        const deploymentTerminalLog = document.getElementById('deployment-terminal-log');
+        const deploymentSuccessMessage = document.getElementById('deployment-success-message');
+        const cloudIcon = document.getElementById('cloud-icon');
+        const webServerIcon = document.getElementById('web-server-icon');
+
+        deployModelBtn.addEventListener('click', () => {
+            deployModelBtn.disabled = true;
+            deploymentSuccessMessage.classList.add('hidden');
+            deploymentTerminalLog.innerHTML = ''; // Clear logs
+
+            cloudIcon.style.opacity = '0.5';
+            webServerIcon.style.opacity = '0.5';
+
+            deploymentTerminalLog.innerHTML += `<p>ZenML orchestrating deployment...</p>`;
+            setTimeout(() => {
+                cloudIcon.style.opacity = '1';
+                deploymentTerminalLog.innerHTML += `<p>MLflow registering model...</p>`;
+            }, 1000);
+
+            setTimeout(() => {
+                webServerIcon.style.opacity = '1';
+                deploymentTerminalLog.innerHTML += `<p class="text-green-400">API endpoint 'online' at <span class="text-blue-300">http://simulated-api.com/predict</span></p>`;
+            }, 2500);
+
+            setTimeout(() => {
+                deploymentSuccessMessage.textContent = "Model 'Deployed Successfully'! Now accepting 'prediction requests'!";
+                deploymentSuccessMessage.classList.remove('hidden');
+                nextDeploymentBtn.classList.remove('hidden');
+            }, 3500);
+        });
+
+        nextDeploymentBtn.addEventListener('click', () => {
+            showPhase('prediction');
+            // Reset deployment screen
+            deployModelBtn.disabled = false;
+            deploymentSuccessMessage.classList.add('hidden');
+            nextDeploymentBtn.classList.add('hidden');
+            deploymentTerminalLog.innerHTML = '<p class="text-gray-500">Awaiting deployment command...</p>';
+            cloudIcon.style.opacity = '0.5';
+            webServerIcon.style.opacity = '0.5';
+        });
+
+        // --- Phase 5: Real-time Prediction Logic ---
+        const getPredictionBtn = document.getElementById('get-prediction-btn');
+        const runAnotherPredictionBtn = document.getElementById('run-another-prediction-btn');
+        const viewPipelineStatusBtn = document.getElementById('view-pipeline-status-btn');
+        const predictionResultDiv = document.getElementById('prediction-result');
+        const predictionStatusText = document.getElementById('prediction-status');
+        const predictedPriceSpan = document.getElementById('predicted-price');
+        const confidenceScoreSpan = document.getElementById('confidence-score');
+
+        const sqftInput = document.getElementById('sqft');
+        const bedroomsInput = document.getElementById('bedrooms');
+        const neighborhoodQualitySelect = document.getElementById('neighborhood-quality');
+        const hasGardenToggle = document.getElementById('has-garden');
+        const yearBuiltInput = document.getElementById('year-built');
+
+        function getSimulatedPrediction() {
+            const sqft = parseInt(sqftInput.value);
+            const bedrooms = parseInt(bedroomsInput.value);
+            const neighborhoodQuality = parseInt(neighborhoodQualitySelect.value);
+            const hasGarden = hasGardenToggle.checked ? 1 : 0;
+            const yearBuilt = parseInt(yearBuiltInput.value);
+
+            // Basic validation
+            if (isNaN(sqft) || sqft < 500 || sqft > 10000 ||
+                isNaN(bedrooms) || bedrooms < 1 || bedrooms > 8 ||
+                isNaN(yearBuilt) || yearBuilt < 1800 || yearBuilt > 2023) {
+                return { price: 'Invalid Input', confidence: 'Low' };
+            }
+
+            // Simulated prediction logic (simple linear model)
+            let price = 100000; // Base price
+            price += sqft * 100; // $100 per sqft
+            price += bedrooms * 20000; // $20k per bedroom
+            price += neighborhoodQuality * 30000; // $30k per quality point
+            price += hasGarden * 15000; // $15k for garden
+            price -= (2023 - yearBuilt) * 1000; // $1k depreciation per year
+
+            // Add some random noise to make it less predictable
+            price += (Math.random() - 0.5) * 50000;
+
+            // Cap min/max for realism
+            price = Math.max(50000, Math.min(1500000, price));
+
+            const confidence = Math.min(95, Math.max(70, 70 + (Math.random() * 25))).toFixed(0); // 70-95%
+
+            return { price: Math.round(price / 1000) * 1000, confidence: `${confidence}%` };
+        }
+
+        getPredictionBtn.addEventListener('click', () => {
+            predictionResultDiv.classList.add('hidden');
+            predictionStatusText.textContent = "Sending data to API...";
+            predictionResultDiv.classList.remove('hidden');
+            getPredictionBtn.disabled = true;
+            runAnotherPredictionBtn.classList.add('hidden');
+
+            setTimeout(() => {
+                predictionStatusText.textContent = "Model processing...";
+            }, 1000);
+
+            setTimeout(() => {
+                const { price, confidence } = getSimulatedPrediction();
+                predictedPriceSpan.textContent = `$${price.toLocaleString()}`;
+                confidenceScoreSpan.textContent = confidence;
+                predictionStatusText.textContent = ""; // Clear status
+                getPredictionBtn.disabled = false;
+                runAnotherPredictionBtn.classList.remove('hidden');
+            }, 2500);
+        });
+
+        runAnotherPredictionBtn.addEventListener('click', () => {
+            predictionResultDiv.classList.add('hidden');
+            runAnotherPredictionBtn.classList.add('hidden');
+            // Reset inputs to default values
+            sqftInput.value = "2000";
+            bedroomsInput.value = "3";
+            neighborhoodQualitySelect.value = "4";
+            hasGardenToggle.checked = true;
+            yearBuiltInput.value = "1995";
+        });
+
+        viewPipelineStatusBtn.addEventListener('click', () => {
+            showPhase('dashboard');
+        });
+
+        // --- Phase 6: MLOps Dashboard Logic ---
+        const backToPredictionBtn = document.getElementById('back-to-prediction-btn');
+        const dataDriftRow = document.getElementById('data-drift-row');
+        const dataDriftAlertDetail = document.getElementById('data-drift-alert-detail');
+
+        dataDriftRow.addEventListener('click', () => {
+            dataDriftAlertDetail.classList.toggle('hidden');
+        });
+
+        backToPredictionBtn.addEventListener('click', () => {
+            showPhase('prediction');
+            dataDriftAlertDetail.classList.add('hidden'); // Hide alert detail when leaving
+        });
+
+    </script>
+</body>
+</html>
